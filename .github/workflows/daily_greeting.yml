@@ -1,0 +1,34 @@
+name: Daily Greeting Scheduler
+
+on:
+  schedule:
+    # 每天9:30运行（UTC时间1:30，北京时间+8小时）
+    - cron: '30 1 * * *'
+  workflow_dispatch:  # 支持手动触发测试
+
+jobs:
+  greeting:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+      
+      - name: Install dependencies
+        run: uv sync
+      
+      - name: Run greeting workflow
+        env:
+          COZE_WORKSPACE_PATH: ${{ github.workspace }}
+          COZE_INTEGRATION_BASE_URL: ${{ secrets.COZE_INTEGRATION_BASE_URL }}
+        run: uv run python src/scheduler/greeting_scheduler.py
+      
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: greeting-logs
+          path: /app/work/logs/bypass/
