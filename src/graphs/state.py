@@ -3,7 +3,7 @@
 目标受众：年轻打工人
 笔记类型：收藏型、讨论型
 主题方向：养生打工人、赚钱爱自己等积极情绪内容
-新增功能：早安问候（每天9:30推送，每天不重复）
+新增功能：早安问候+每日待办（每天9:30推送，每天不重复）
 """
 
 from typing import Literal, Optional, List, Dict, Any
@@ -31,6 +31,11 @@ class GlobalState(BaseModel):
     greeting_content: str = Field(default="", description="早安问候文案内容")
     greeting_image_url: str = Field(default="", description="早安问候配图URL")
     greeting_style: str = Field(default="随意", description="问候风格：温馨治愈/鸡血励志/幽默调侃/随意")
+    
+    # 每日待办相关
+    daily_todo_content: str = Field(default="", description="每日待办提醒内容")
+    todo_image_url: str = Field(default="", description="待办提醒配图URL")
+    
     push_status: str = Field(default="", description="推送状态：成功/失败")
 
 
@@ -173,12 +178,37 @@ class GreetingImageGenOutput(BaseModel):
     image_prompt: str = Field(default="", description="生成图片的提示词")
 
 
+# ==================== 每日待办节点定义 ====================
+
+# 每日待办生成节点
+class DailyTodoInput(BaseModel):
+    """每日待办生成节点输入"""
+    date_info: Dict[str, Any] = Field(default={}, description="日期信息")
+
+
+class DailyTodoOutput(BaseModel):
+    """每日待办生成节点输出"""
+    daily_todo_content: str = Field(..., description="每日待办提醒内容")
+
+
+# 每日待办图片生成节点
+class TodoImageGenInput(BaseModel):
+    """每日待办图片生成节点输入"""
+    todo_content: str = Field(..., description="每日待办内容")
+
+
+class TodoImageGenOutput(BaseModel):
+    """每日待办图片生成节点输出"""
+    todo_image_url: str = Field(..., description="待办提醒配图URL")
+
+
 # 微信推送节点
 class WechatPushInput(BaseModel):
     """微信推送节点输入"""
-    greeting_content: str = Field(..., description="早安问候文案")
-    greeting_image_url: str = Field(..., description="早安问候配图URL")
-    greeting_style: str = Field(default="随意", description="问候风格")
+    greeting_content: str = Field(default="", description="早安问候文案")
+    greeting_image_url: str = Field(default="", description="早安问候配图URL")
+    daily_todo_content: str = Field(default="", description="每日待办内容")
+    todo_image_url: str = Field(default="", description="待办提醒配图URL")
 
 
 class WechatPushOutput(BaseModel):

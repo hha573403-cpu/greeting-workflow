@@ -12,37 +12,40 @@
    - 内容预览与质量评估功能
 
 2. 早安问候推送（每天9:30）
-   - 每天生成不重复的早安问候文案
+   - 每日待办生成：自动生成打工人每日待办提醒
+   - 早安问候文案：每天不重复的温馨问候
    - 风格可定制：温馨治愈、鸡血励志、幽默调侃、随意
    - 自动生成配图
-   - 推送到企业微信群提醒
+   - 整合推送到企业微信群提醒
 
 工作流结构：
 入口 → 条件判断(content_type)
   ├→ 笔记内容分支：话题选择 → 内容生成(Agent) → 图片生成 → 内容预览
-  └→ 早安问候分支：问候文案生成(Agent) → 图片生成 → 微信推送
+  └→ 早安问候分支：每日待办生成(Agent) → 问候文案生成(Agent) → 图片生成 → 微信推送
 
 使用方式：
 - 笔记内容：输入笔记类型、主题方向 → 输出完整笔记内容
-- 早安问候：输入greeting_style → 输出问候内容+配图+推送状态
+- 早安问候：输入greeting_style → 输出每日待办+问候内容+配图+推送状态
 
 定时调度：
 - 启动命令: bash scripts/start_scheduler.sh
 - 调度时间: 每天 09:30
+- 推送内容: 每日待办 + 早安问候文案 + 配图
 - 日志位置: /app/work/logs/bypass/scheduler.log
 """
 
 # 节点清单
 # | 节点名 | 文件位置 | 类型 | 功能描述 | 分支逻辑 | 配置文件 |
 # |-------|---------|------|---------|---------|---------|
-# | content_type_check | graph.py | condition | 判断内容类型选择分支 | "早安问候"→greeting_gen, "笔记内容"→topic_select | - |
+# | content_type_check | graph.py | condition | 判断内容类型选择分支 | "早安问候"→daily_todo, "笔记内容"→topic_select | - |
 # | topic_select | nodes/topic_select_node.py | task | 根据笔记类型和主题选择话题 | - | - |
 # | content_gen | nodes/content_gen_node.py | agent | 使用LLM生成笔记内容 | - | config/content_gen_cfg.json |
 # | image_gen | nodes/image_gen_node.py | task | 根据内容生成配图 | - | - |
 # | preview | nodes/preview_node.py | task | 整合输出内容预览 | - | - |
+# | daily_todo | nodes/daily_todo_node.py | agent | 使用LLM生成每日待办 | - | config/daily_todo_cfg.json |
 # | greeting_gen | nodes/greeting_gen_node.py | agent | 使用LLM生成早安问候文案 | - | config/greeting_gen_cfg.json |
 # | greeting_image_gen | nodes/greeting_image_gen_node.py | task | 生成早安问候配图 | - | - |
-# | wechat_push | nodes/wechat_push_node.py | task | 推送到企业微信群 | - | - |
+# | wechat_push | nodes/wechat_push_node.py | task | 整合推送每日待办+早安问候到企业微信 | - | - |
 
 # 类型说明: task(普通任务节点) / agent(大模型节点) / condition(条件分支) / looparray(列表循环) / loopcond(条件循环)
 

@@ -64,8 +64,9 @@ def wechat_push_node(
     # 构建推送内容
     greeting_content = state.greeting_content
     greeting_image_url = state.greeting_image_url
+    daily_todo_content = state.daily_todo_content
     
-    # 发送图文消息（包含早安文案和图片）
+    # 发送整合消息（每日待办 + 早安问候）
     push_result: Dict[str, Any] = {}
     
     try:
@@ -92,14 +93,20 @@ def wechat_push_node(
             img_send_response.raise_for_status()
             img_result = img_send_response.json()
         
-        # 2. 发送早安文案（markdown格式，便于阅读）
+        # 2. 发送整合文案（每日待办 + 早安问候）
         markdown_content = f"""
-## ☀️ 早安，打工人！
+## 📋 每日待办提醒
 
-{greeting_content}
+{daily_todo_content if daily_todo_content else '今日待办已生成，请查看详细内容'}
 
 ---
-> 📌 **今日提示**: 内容已生成，请复制发布到小红书
+
+## ☀️ 早安，打工人！
+
+{greeting_content if greeting_content else '早安问候已生成，请查看详细内容'}
+
+---
+> 📌 **提示**: 内容已生成，请复制发布到小红书
 > 🎨 配图已发送，请查看上方图片
 """
         
@@ -117,7 +124,7 @@ def wechat_push_node(
         if text_result.get("errcode", 0) == 0:
             push_result = {
                 "status": "成功",
-                "message": "早安问候已推送成功"
+                "message": "每日待办+早安问候已推送成功"
             }
         else:
             push_result = {

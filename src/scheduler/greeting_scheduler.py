@@ -1,6 +1,6 @@
 """
-定时调度器 - 每天自动运行早安问候工作流
-每天早上 9:30 自动触发早安问候生成并推送到企业微信
+定时调度器 - 每天自动运行早安问候+每日待办工作流
+每天早上 9:30 自动触发并推送到企业微信
 """
 import os
 import sys
@@ -26,57 +26,108 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# 导入工作流
+# 导入工作流和推送功能
 from graphs.graph import main_graph
+from graphs.nodes.greeting_gen_node import greeting_gen_node
+from graphs.nodes.greeting_image_gen_node import greeting_image_gen_node
+from graphs.nodes.daily_todo_node import daily_todo_node
+from graphs.nodes.wechat_push_node import wechat_push_node
 
 
-def run_greeting_workflow():
-    """执行早安问候工作流"""
-    logger.info("=" * 50)
-    logger.info("开始执行早安问候工作流...")
+def run_daily_push():
+    """执行每日推送：每日待办 + 早安问候"""
+    logger.info("=" * 60)
+    logger.info("开始执行每日推送工作流...")
+    
+    today = datetime.datetime.now()
+    logger.info(f"今天是 {today.strftime('%Y年%m月%d日 %A')}")
     
     try:
-        # 构造输入参数
-        input_data = {
-            "content_type": "早安问候",
-            "greeting_style": "温馨治愈"
+        # 1. 生成每日待办内容
+        logger.info(">>> 正在生成每日待办内容...")
+        todo_result = daily_todo_node(
+            {"date_info": {}},
+            {"metadata": {"llm_cfg": "config/daily_todo_cfg.json"}},
+            {"context": None}
+        )
+        todo_content = todo_result.daily_todo_content
+        logger.info(f"每日待办已生成，长度: {len(todo_content)}字")
+        
+        # 2. 生成早安问候内容
+        logger.info(">>> 正在生成早安问候内容...")
+        greeting_result = greeting_gen_node(
+            {"greeting_style": "温馨治愈"},
+            {"metadata": {"llm_cfg": "config/greeting_gen_cfg.json"}},
+            {"context": None}
+        )
+        greeting_content = greeting_result.greeting_content
+        logger.info(f"早安问候已生成，长度: {len(greeting_content)}字")
+        
+        # 3. 生成早安问候配图
+        logger.info(">>> 正在生成早安问候配图...")
+        greeting_img_result = greeting_image_gen_node(
+            {"greeting_content": greeting_content, "greeting_style": "温馨治愈"},
+            {},
+            {"context": None}
+        )
+        greeting_image_url = greeting_img_result.greeting_image_url
+        logger.info(f"早安问候配图已生成")
+        
+        # 4. 推送到企业微信（整合两条内容）
+        logger.info(">>> 正在推送到企业微信...")
+        push_result = wechat_push_node(
+            {
+                "greeting_content": greeting_content,
+                "greeting_image_url": greeting_image_url,
+                "daily_todo_content": todo_content,
+                "todo_image_url": ""  # 待办不单独生成图片，用早安图片
+            },
+            {},
+            {"context": None}
+        )
+        push_status = push_result.push_status
+        
+        logger.info(f"推送状态: {push_status}")
+        
+        if push_status == "成功":
+            logger.info("✅ 每日推送成功！早安问候+每日待办已推送到企业微信")
+        else:
+            logger.warning(f"⚠️ 推送状态: {push_status}")
+        
+        logger.info("=" * 60)
+        logger.info("每日推送工作流执行完成!")
+        
+        return {
+            "todo_content": todo_content,
+            "greeting_content": greeting_content,
+            "greeting_image_url": greeting_image_url,
+            "push_status": push_status
         }
         
-        # 获取当前日期，确保每天内容不重复
-        today = datetime.datetime.now()
-        logger.info(f"今天是 {today.strftime('%Y年%m月%d日 %A')}")
-        
-        # 执行工作流
-        result = main_graph.invoke(input_data)
-        
-        # 记录结果
-        logger.info(f"工作流执行完成!")
-        logger.info(f"推送状态: {result.get('push_status', '未知')}")
-        
-        if result.get('push_status') == '成功':
-            logger.info("✅ 早安问候已成功推送到企业微信!")
-        else:
-            logger.warning(f"⚠️ 推送状态: {result.get('push_status')}")
-        
-        return result
-        
     except Exception as e:
-        logger.error(f"❌ 工作流执行失败: {str(e)}")
-        raise
+        logger.error(f"❌ 每日推送执行失败: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
+        return {"push_status": "失败", "error": str(e)}
 
 
-def main():
-    """主函数 - 启动定时调度"""
-    logger.info("=" * 50)
-    logger.info("定时调度器启动")
-    logger.info("调度时间: 每天 09:30")
-    logger.info("任务: 早安问候生成 + 企业微信推送")
-    logger.info("=" * 50)
+def start_scheduler():
+    """启动定时调度器"""
+    logger.info("=" * 60)
+    logger.info("🚀 启动每日推送定时调度器")
+    logger.info("⏰ 推送时间: 每天 09:30")
+    logger.info("📱 推送内容: 每日待办 + 早安问候文案+配图")
+    logger.info("📍 推送渠道: 企业微信群机器人")
+    logger.info("=" * 60)
     
-    # 设置每天9:30执行
-    schedule.every().day.at("09:30").do(run_greeting_workflow)
+    # 设置定时任务
+    schedule.every().day.at("09:30").do(run_daily_push)
     
-    logger.info("调度器已启动，等待执行...")
+    logger.info("调度器已启动，等待下次触发时间...")
+    
+    # 显示下次触发时间
+    next_run = schedule.next_run()
+    logger.info(f"下次触发时间: {next_run}")
     
     # 持续运行
     while True:
@@ -85,4 +136,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    start_scheduler()
