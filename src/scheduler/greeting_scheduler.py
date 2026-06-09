@@ -15,12 +15,17 @@ PROJECT_PATH = os.getenv("COZE_WORKSPACE_PATH", "/workspace/projects")
 sys.path.insert(0, PROJECT_PATH)
 sys.path.insert(0, os.path.join(PROJECT_PATH, "src"))
 
-# 设置日志
+# 设置日志 - 动态创建日志目录
+LOG_DIR = '/app/work/logs/bypass'
+if not os.path.exists(LOG_DIR):
+    os.makedirs(LOG_DIR, exist_ok=True)
+LOG_FILE = os.path.join(LOG_DIR, 'scheduler.log')
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('/app/work/logs/bypass/scheduler.log'),
+        logging.FileHandler(LOG_FILE),
         logging.StreamHandler()
     ]
 )
