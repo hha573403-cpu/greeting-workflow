@@ -19,12 +19,18 @@ def get_webhook_key() -> str:
     """获取企业微信机器人webhook_key"""
     client = Client()
     wechat_bot_credential = client.get_integration_credential("integration-wechat-bot")
-    webhook_key = json.loads(wechat_bot_credential).get("webhook_key", "")
-    if "https" in webhook_key:
-        match = re.search(r"key=([a-zA-Z0-9-]+)", webhook_key)
+    data = json.loads(wechat_bot_credential)
+    
+    # 支持 webhook_url 或 webhook_key 两种字段名
+    webhook_value = data.get("webhook_key") or data.get("webhook_url") or ""
+    
+    # 如果是完整URL，提取key参数
+    if "https" in webhook_value:
+        match = re.search(r"key=([a-zA-Z0-9-]+)", webhook_value)
         if match:
-            webhook_key = match.group(1)
-    return webhook_key
+            return match.group(1)
+    
+    return webhook_value
 
 
 def wechat_push_node(

@@ -52,9 +52,12 @@
 # - wechat_push节点使用企业微信机器人集成(integration-wechat-bot)
 
 # 集成配置要求
-# 企业微信机器人推送需要配置 webhook_key：
+# 企业微信机器人推送需要配置 webhook：
 # 1. 在企业微信群中添加机器人获取webhook URL
-# 2. 在平台上配置 integration-wechat-bot 集成
+# 2. 在Coze平台配置 integration-wechat-bot 集成
+# 3. 配置字段支持 webhook_url 或 webhook_key
+# 4. 格式示例: https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxxxx-xxxx-xxxx
+# 5. 配置后早安装问候将自动推送到企业微信群
 
 # 话题库说明（笔记内容分支）
 # 预定义话题库位于 topic_select_node.py，包含以下主题方向：
