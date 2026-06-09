@@ -25,6 +25,11 @@
 使用方式：
 - 笔记内容：输入笔记类型、主题方向 → 输出完整笔记内容
 - 早安问候：输入greeting_style → 输出问候内容+配图+推送状态
+
+定时调度：
+- 启动命令: bash scripts/start_scheduler.sh
+- 调度时间: 每天 09:30
+- 日志位置: /app/work/logs/bypass/scheduler.log
 """
 
 # 节点清单
