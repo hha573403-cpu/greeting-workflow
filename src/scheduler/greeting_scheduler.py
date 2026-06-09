@@ -15,8 +15,8 @@ PROJECT_PATH = os.getenv("COZE_WORKSPACE_PATH", "/workspace/projects")
 sys.path.insert(0, PROJECT_PATH)
 sys.path.insert(0, os.path.join(PROJECT_PATH, "src"))
 
-# 设置日志 - 动态创建日志目录
-LOG_DIR = '/app/work/logs/bypass'
+# 设置日志 - 使用项目目录下的logs文件夹
+LOG_DIR = os.path.join(PROJECT_PATH, 'logs')
 if not os.path.exists(LOG_DIR):
     os.makedirs(LOG_DIR, exist_ok=True)
 LOG_FILE = os.path.join(LOG_DIR, 'scheduler.log')
