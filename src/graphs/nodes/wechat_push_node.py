@@ -3,6 +3,7 @@
 将早安问候内容推送到企业微信群
 """
 
+import os
 import json
 import re
 import requests
@@ -10,27 +11,38 @@ from typing import Dict, Any
 from langchain_core.runnables import RunnableConfig
 from langgraph.runtime import Runtime
 from coze_coding_utils.runtime_ctx.context import Context
-from coze_workload_identity import Client
 from cozeloop.decorator import observe
 from graphs.state import WechatPushInput, WechatPushOutput
 
 
 def get_webhook_key() -> str:
-    """获取企业微信机器人webhook_key"""
-    client = Client()
-    wechat_bot_credential = client.get_integration_credential("integration-wechat-bot")
-    data = json.loads(wechat_bot_credential)
+    """获取企业微信机器人webhook_key
+    优先从环境变量读取，其次从集成配置读取
+    """
+    # 优先从环境变量读取（用于GitHub Actions等外部环境）
+    env_key = os.getenv("WECHAT_WEBHOOK_KEY", "")
+    if env_key:
+        return env_key
     
-    # 支持 webhook_url 或 webhook_key 两种字段名
-    webhook_value = data.get("webhook_key") or data.get("webhook_url") or ""
-    
-    # 如果是完整URL，提取key参数
-    if "https" in webhook_value:
-        match = re.search(r"key=([a-zA-Z0-9-]+)", webhook_value)
-        if match:
-            return match.group(1)
-    
-    return webhook_value
+    # 其次从集成配置读取（用于本地开发环境）
+    try:
+        from coze_workload_identity import Client
+        client = Client()
+        wechat_bot_credential = client.get_integration_credential("integration-wechat-bot")
+        data = json.loads(wechat_bot_credential)
+        
+        # 支持 webhook_url 或 webhook_key 两种字段名
+        webhook_value = data.get("webhook_key") or data.get("webhook_url") or ""
+        
+        # 如果是完整URL，提取key参数
+        if "https" in webhook_value:
+            match = re.search(r"key=([a-zA-Z0-9-]+)", webhook_value)
+            if match:
+                return match.group(1)
+        
+        return webhook_value
+    except Exception:
+        return ""
 
 
 def wechat_push_node(
