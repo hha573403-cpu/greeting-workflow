@@ -3,7 +3,7 @@
 DAG结构：
 - 入口 → 条件判断
   ├→ 笔记内容分支：话题选择 -> 内容生成 -> 图片生成 -> 内容预览
-  └→ 早安问候分支：问候文案生成 -> 问候图片生成 -> 微信推送
+  └→ 问候推送分支：问候文案生成 -> 问候图片生成 -> 微信推送
 """
 
 from langgraph.graph import StateGraph, END
@@ -47,11 +47,11 @@ from graphs.nodes.wechat_push_node import wechat_push_node
 def content_type_check(state: GlobalState) -> str:
     """
     title: 内容类型判断
-    desc: 根据输入的content_type判断是生成笔记内容还是早安问候，决定后续流程分支
+    desc: 根据输入的content_type判断是生成笔记内容还是问候推送，决定后续流程分支
     """
     content_type = state.content_type
-    if content_type == "早安问候":
-        return "早安问候分支"
+    if content_type == "问候推送":
+        return "问候推送分支"
     else:
         return "笔记内容分支"
 
@@ -79,7 +79,7 @@ builder.add_node(
 builder.add_node("image_gen", image_gen_node)
 builder.add_node("preview", preview_node)
 
-# 早安问候分支节点
+# 问候推送分支节点
 builder.add_node(
     "greeting_gen",
     greeting_gen_node,
@@ -94,13 +94,12 @@ builder.add_node("wechat_push", wechat_push_node)
 
 # ==================== 设置边 ====================
 
-# 设置入口点为条件判断的起始节点（笔记分支从topic_select开始，早安分支从greeting_gen开始）
-# 使用条件边从START开始
+# 设置入口点为条件判断的起始节点
 builder.set_conditional_entry_point(
     path=content_type_check,
     path_map={
         "笔记内容分支": "topic_select",
-        "早安问候分支": "greeting_gen"
+        "问候推送分支": "greeting_gen"
     }
 )
 
@@ -110,7 +109,7 @@ builder.add_edge("content_gen", "image_gen")
 builder.add_edge("image_gen", "preview")
 builder.add_edge("preview", END)
 
-# 早安问候分支流程
+# 问候推送分支流程
 builder.add_edge("greeting_gen", "greeting_image_gen")
 builder.add_edge("greeting_image_gen", "wechat_push")
 builder.add_edge("wechat_push", END)

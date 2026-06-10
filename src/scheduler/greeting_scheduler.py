@@ -2,7 +2,7 @@
 """
 小红书笔记生成工作流调度器
 支持两种模式：
-1. 早安问候模式：每天早上9:30自动生成并推送早安问候到企业微信
+1. 问候推送模式：早安/午饭/午休/下午茶/下班/晚安，全天候陪伴打工人
 2. 笔记内容模式：生成小红书笔记内容（收藏型或讨论型）
 """
 import os
@@ -37,36 +37,50 @@ logger = logging.getLogger(__name__)
 from graphs.graph import main_graph
 
 
-def run_daily_push():
-    """执行每日推送：早安问候"""
+def run_greeting_push(greeting_type: str):
+    """执行问候推送
+    
+    Args:
+        greeting_type: 问候类型，早安/午饭/午休/下午茶/下班/晚安
+    """
     logger.info("=" * 60)
-    logger.info("开始执行每日推送工作流...")
+    logger.info(f"开始执行{greeting_type}推送...")
     
     today = datetime.datetime.now()
     logger.info(f"今天是 {today.strftime('%Y年%m月%d日 %A')}")
     
     try:
-        logger.info(">>> 正在生成早安问候内容...")
+        logger.info(f">>> 正在生成{greeting_type}内容...")
         
         result = main_graph.invoke({
-            "content_type": "早安问候",
-            "greeting_style": "温馨治愈"
+            "content_type": "问候推送",
+            "greeting_type": greeting_type
         })
         
         greeting_content = result.get("greeting_content", "")
         greeting_image_url = result.get("greeting_image_url", "")
         push_status = result.get("push_status", "未知")
         
-        logger.info(f"早安问候已生成")
+        logger.info(f"{greeting_type}内容已生成")
         logger.info(f"推送状态: {push_status}")
         
         if push_status == "成功":
-            logger.info("✅ 每日推送成功！早安问候已推送到企业微信")
+            logger.info(f"✅ {greeting_type}推送成功！已推送到企业微信")
         else:
             logger.warning(f"⚠️ 推送状态: {push_status}")
         
         logger.info("=" * 60)
-        logger.info("每日推送工作流执行完成!")
+        logger.info(f"{greeting_type}推送工作流执行完成!")
+        
+        # 输出结果JSON
+        output = {
+            "content_type": "问候推送",
+            "greeting_type": greeting_type,
+            "greeting_content": greeting_content,
+            "greeting_image_url": greeting_image_url,
+            "push_status": push_status
+        }
+        print(json.dumps(output, ensure_ascii=False, indent=2))
         
         return result
         
@@ -138,7 +152,13 @@ def main():
         "--mode", 
         choices=["greeting", "note"],
         default="greeting",
-        help="运行模式: greeting(早安问候) 或 note(笔记内容)"
+        help="运行模式: greeting(问候推送) 或 note(笔记内容)"
+    )
+    parser.add_argument(
+        "--greeting-type",
+        choices=["早安", "午饭", "午休", "下午茶", "下班", "晚安"],
+        default="早安",
+        help="问候类型（仅greeting模式有效）"
     )
     parser.add_argument(
         "--note-type",
@@ -155,16 +175,12 @@ def main():
     args = parser.parse_args()
     
     if args.mode == "greeting":
-        # GitHub Actions 默认调用早安问候
-        logger.info("GitHub Actions触发 - 执行每日推送")
-        run_daily_push()
+        logger.info(f"触发 {args.greeting_type} 推送")
+        run_greeting_push(args.greeting_type)
     else:
-        # 笔记内容生成
         logger.info("手动触发 - 执行笔记内容生成")
         run_note_gen(args.note_type, args.theme)
 
 
 if __name__ == "__main__":
     main()
-    result = run_daily_push()
-    print(json.dumps(result, ensure_ascii=False, indent=2))

@@ -3,7 +3,7 @@
 目标受众：年轻打工人
 笔记类型：收藏型、讨论型
 主题方向：养生打工人、赚钱爱自己等积极情绪内容
-新增功能：早安问候+每日待办（每天9:30推送，每天不重复）
+一日问候功能：早安/午饭/午休/下午茶/下班/晚安，全天候陪伴
 """
 
 from typing import Literal, Optional, List, Dict, Any
@@ -11,11 +11,35 @@ from pydantic import BaseModel, Field
 from utils.file.file import File
 
 
+# ==================== 问候类型常量 ====================
+GREETING_TYPES = Literal["早安", "午饭", "午休", "下午茶", "下班", "晚安"]
+
+# 各类型的主题描述
+GREETING_TYPE_DESC = {
+    "早安": "元气满满的一天开始，给打工人加油鼓劲",
+    "午饭": "吃饭时间提醒，营养健康小贴士",
+    "午休": "休息充电，下午更有精力",
+    "下午茶": "提神醒脑，下午继续加油",
+    "下班": "辛苦一天，犒劳自己",
+    "晚安": "好好休息，明天继续奋斗"
+}
+
+# 各类型的图片风格
+GREETING_TYPE_IMAGE_STYLE = {
+    "早安": "温暖明亮的早晨色调，阳光、咖啡、窗边，充满希望和能量",
+    "午饭": "美食相关，温馨的餐桌氛围，健康营养的感觉",
+    "午休": "安静放松的氛围，舒适的休息场景，充电回血的感觉",
+    "下午茶": "轻松惬意，咖啡茶点，下午时光，提神醒脑",
+    "下班": "轻松快乐的氛围，夕阳、回家路上的温馨感，犒劳自己",
+    "晚安": "温馨宁静的夜晚氛围，月亮星星，舒适放松的感觉"
+}
+
+
 # ==================== 全局状态 ====================
 class GlobalState(BaseModel):
     """工作流全局状态"""
     # 通用字段
-    content_type: str = Field(default="笔记内容", description="内容类型：笔记内容或早安问候")
+    content_type: str = Field(default="问候推送", description="内容类型：笔记内容或问候推送")
     
     # 笔记内容相关
     note_type: str = Field(default="收藏型", description="笔记类型：收藏型或讨论型")
@@ -27,14 +51,10 @@ class GlobalState(BaseModel):
     image_url: str = Field(default="", description="配图URL")
     preview_info: Dict[str, Any] = Field(default={}, description="完整预览信息")
     
-    # 早安问候相关
-    greeting_content: str = Field(default="", description="早安问候文案内容")
-    greeting_image_url: str = Field(default="", description="早安问候配图URL")
-    greeting_style: str = Field(default="随意", description="问候风格：温馨治愈/鸡血励志/幽默调侃/随意")
-    
-    # 每日待办相关
-    daily_todo_content: str = Field(default="", description="每日待办提醒内容")
-    todo_image_url: str = Field(default="", description="待办提醒配图URL")
+    # 问候推送相关
+    greeting_type: str = Field(default="早安", description="问候类型：早安/午饭/午休/下午茶/下班/晚安")
+    greeting_content: str = Field(default="", description="问候文案内容")
+    greeting_image_url: str = Field(default="", description="问候配图URL")
     
     push_status: str = Field(default="", description="推送状态：成功/失败")
 
@@ -42,9 +62,9 @@ class GlobalState(BaseModel):
 # ==================== 工作流输入输出 ====================
 class GraphInput(BaseModel):
     """工作流输入"""
-    content_type: Literal["笔记内容", "早安问候"] = Field(
-        default="笔记内容",
-        description="内容类型：笔记内容（生成小红书笔记）或早安问候（生成每日早安推送）"
+    content_type: Literal["笔记内容", "问候推送"] = Field(
+        default="问候推送",
+        description="内容类型：笔记内容（生成小红书笔记）或问候推送（生成每日问候推送）"
     )
     # 笔记内容参数
     note_type: Literal["收藏型", "讨论型"] = Field(
@@ -55,10 +75,10 @@ class GraphInput(BaseModel):
         default="养生打工人",
         description="主题方向：养生打工人、赚钱爱自己、职场成长、生活小技巧等"
     )
-    # 早安问候参数
-    greeting_style: Literal["温馨治愈", "鸡血励志", "幽默调侃", "随意"] = Field(
-        default="随意",
-        description="早安问候风格"
+    # 问候推送参数
+    greeting_type: Literal["早安", "午饭", "午休", "下午茶", "下班", "晚安"] = Field(
+        default="早安",
+        description="问候类型：早安(9:30)/午饭(12:00)/午休(12:30)/下午茶(15:30)/下班(18:00)/晚安(22:00)"
     )
 
 
@@ -73,9 +93,10 @@ class GraphOutput(BaseModel):
     image_url: str = Field(default="", description="配图URL")
     preview_info: Dict[str, Any] = Field(default={}, description="完整预览信息")
     
-    # 早安问候输出（当content_type=早安问候时）
-    greeting_content: str = Field(default="", description="早安问候文案")
-    greeting_image_url: str = Field(default="", description="早安问候配图URL")
+    # 问候推送输出（当content_type=问候推送时）
+    greeting_type: str = Field(default="", description="问候类型")
+    greeting_content: str = Field(default="", description="问候文案")
+    greeting_image_url: str = Field(default="", description="问候配图URL")
     push_status: str = Field(default="", description="推送状态")
 
 
@@ -151,64 +172,39 @@ class PreviewOutput(BaseModel):
     publish_suggestion: str = Field(default="", description="发布建议")
 
 
-# ==================== 早安问候节点定义 ====================
+# ==================== 问候生成节点定义 ====================
 
-# 早安文案生成节点
+# 问候文案生成节点
 class GreetingGenInput(BaseModel):
-    """早安文案生成节点输入"""
-    greeting_style: str = Field(default="随意", description="问候风格")
+    """问候文案生成节点输入"""
+    greeting_type: str = Field(..., description="问候类型：早安/午饭/午休/下午茶/下班/晚安")
 
 
 class GreetingGenOutput(BaseModel):
-    """早安文案生成节点输出"""
-    greeting_content: str = Field(..., description="早安问候文案（段落式，适合小红书）")
-    greeting_title: str = Field(default="", description="早安问候标题")
+    """问候文案生成节点输出"""
+    greeting_content: str = Field(..., description="问候文案（段落式，适合推送）")
+    greeting_type: str = Field(..., description="问候类型")
 
 
-# 早安图片生成节点
+# 问候图片生成节点
 class GreetingImageGenInput(BaseModel):
-    """早安图片生成节点输入"""
-    greeting_content: str = Field(..., description="早安问候文案")
-    greeting_style: str = Field(default="随意", description="问候风格")
+    """问候图片生成节点输入"""
+    greeting_content: str = Field(..., description="问候文案")
+    greeting_type: str = Field(..., description="问候类型")
 
 
 class GreetingImageGenOutput(BaseModel):
-    """早安图片生成节点输出"""
-    greeting_image_url: str = Field(..., description="早安问候配图URL")
+    """问候图片生成节点输出"""
+    greeting_image_url: str = Field(..., description="问候配图URL")
     image_prompt: str = Field(default="", description="生成图片的提示词")
-
-
-# ==================== 每日待办节点定义 ====================
-
-# 每日待办生成节点
-class DailyTodoInput(BaseModel):
-    """每日待办生成节点输入"""
-    date_info: Dict[str, Any] = Field(default={}, description="日期信息")
-
-
-class DailyTodoOutput(BaseModel):
-    """每日待办生成节点输出"""
-    daily_todo_content: str = Field(..., description="每日待办提醒内容")
-
-
-# 每日待办图片生成节点
-class TodoImageGenInput(BaseModel):
-    """每日待办图片生成节点输入"""
-    todo_content: str = Field(..., description="每日待办内容")
-
-
-class TodoImageGenOutput(BaseModel):
-    """每日待办图片生成节点输出"""
-    todo_image_url: str = Field(..., description="待办提醒配图URL")
 
 
 # 微信推送节点
 class WechatPushInput(BaseModel):
     """微信推送节点输入"""
-    greeting_content: str = Field(default="", description="早安问候文案")
-    greeting_image_url: str = Field(default="", description="早安问候配图URL")
-    daily_todo_content: str = Field(default="", description="每日待办内容")
-    todo_image_url: str = Field(default="", description="待办提醒配图URL")
+    greeting_type: str = Field(..., description="问候类型")
+    greeting_content: str = Field(..., description="问候文案")
+    greeting_image_url: str = Field(default="", description="问候配图URL")
 
 
 class WechatPushOutput(BaseModel):

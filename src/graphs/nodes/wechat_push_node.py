@@ -1,18 +1,31 @@
 """
 微信推送节点
-将早安问候内容推送到企业微信群
+将问候内容推送到企业微信群
+支持：早安/午饭/午休/下午茶/下班/晚安 六种类型
 """
 
 import os
 import json
 import re
 import requests
+import base64
+import hashlib
 from typing import Dict, Any
 from langchain_core.runnables import RunnableConfig
 from langgraph.runtime import Runtime
 from coze_coding_utils.runtime_ctx.context import Context
-from cozeloop.decorator import observe
 from graphs.state import WechatPushInput, WechatPushOutput
+
+
+# 各类型的标题和图标
+GREETING_TYPE_TITLE = {
+    "早安": "☀️ 早安，打工人！",
+    "午饭": "🍜 该吃饭啦！",
+    "午休": "💤 午休时间~",
+    "下午茶": "☕ 下午茶时刻",
+    "下班": "🎉 下班啦！辛苦一天！",
+    "晚安": "🌙 晚安，好梦~"
+}
 
 
 def get_webhook_key() -> str:
@@ -52,7 +65,7 @@ def wechat_push_node(
 ) -> WechatPushOutput:
     """
     title: 微信推送
-    desc: 将早安问候文案和配图推送到企业微信群，提醒用户查看并发布到小红书
+    desc: 将问候文案和配图推送到企业微信群，支持早安/午饭/午休/下午茶/下班/晚安
     integrations: 企业微信机器人
     """
     
@@ -73,12 +86,14 @@ def wechat_push_node(
     send_url = f"https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key={webhook_key}"
     headers = {"Content-Type": "application/json"}
     
-    # 构建推送内容
+    # 获取推送内容
+    greeting_type = state.greeting_type
     greeting_content = state.greeting_content
     greeting_image_url = state.greeting_image_url
-    daily_todo_content = state.daily_todo_content
     
-    # 发送整合消息（每日待办 + 早安问候）
+    # 获取对应类型的标题
+    type_title = GREETING_TYPE_TITLE.get(greeting_type, "🔔 温馨提醒")
+    
     push_result: Dict[str, Any] = {}
     
     try:
@@ -87,8 +102,6 @@ def wechat_push_node(
             # 下载图片并转为base64
             img_response = requests.get(greeting_image_url, timeout=30)
             img_response.raise_for_status()
-            import base64
-            import hashlib
             img_data = img_response.content
             img_b64 = base64.b64encode(img_data).decode("utf-8")
             img_md5 = hashlib.md5(img_data).hexdigest()
@@ -103,23 +116,15 @@ def wechat_push_node(
             
             img_send_response = requests.post(send_url, json=image_payload, headers=headers, timeout=15)
             img_send_response.raise_for_status()
-            img_result = img_send_response.json()
         
-        # 2. 发送整合文案（每日待办 + 早安问候）
+        # 2. 发送文案
         markdown_content = f"""
-## 📋 每日待办提醒
+## {type_title}
 
-{daily_todo_content if daily_todo_content else '今日待办已生成，请查看详细内容'}
-
----
-
-## ☀️ 早安，打工人！
-
-{greeting_content if greeting_content else '早安问候已生成，请查看详细内容'}
+{greeting_content if greeting_content else '内容已生成，请查看详细内容'}
 
 ---
-> 📌 **提示**: 内容已生成，请复制发布到小红书
-> 🎨 配图已发送，请查看上方图片
+> 📌 **提示**: 内容已生成，可复制发布到小红书
 """
         
         text_payload = {
@@ -136,7 +141,7 @@ def wechat_push_node(
         if text_result.get("errcode", 0) == 0:
             push_result = {
                 "status": "成功",
-                "message": "每日待办+早安问候已推送成功"
+                "message": f"{greeting_type}推送成功"
             }
         else:
             push_result = {
