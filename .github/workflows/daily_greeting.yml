@@ -24,9 +24,9 @@ jobs:
       - name: Run greeting workflow
         env:
           COZE_WORKSPACE_PATH: ${{ github.workspace }}
-          COZE_WORKLOAD_IDENTITY_API_KEY: ${{ secrets.COZE_WORKLOAD_IDENTITY_API_KEY }}
-          COZE_INTEGRATION_BASE_URL: ${{ secrets.COZE_INTEGRATION_BASE_URL }}
-          COZE_INTEGRATION_MODEL_BASE_URL: ${{ secrets.COZE_INTEGRATION_BASE_URL }}
+          COZE_WORKLOAD_IDENTITY_API_KEY: ${{ secrets.ARK_API_KEY }}
+          COZE_INTEGRATION_BASE_URL: https://api.coze.cn
+          COZE_INTEGRATION_MODEL_BASE_URL: ${{ secrets.ARK_BASE_URL }}
           WECHAT_WEBHOOK_KEY: ${{ secrets.WECHAT_WEBHOOK_KEY }}
         run: uv run python src/scheduler/greeting_scheduler.py
       
