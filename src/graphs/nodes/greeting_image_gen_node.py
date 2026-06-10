@@ -17,91 +17,109 @@ from graphs.state import (
 )
 
 
-# 各类型的图片提示词模板 - 强调治愈系插画风格
+# 各类型的图片提示词模板 - 治愈系插画风格，符合小红书审美
 GREETING_TYPE_IMAGE_PROMPT = {
     "早安": """
-Create a warm morning illustration for young office workers.
+A warm and energetic morning illustration for young office workers.
 
-Style: Soft hand-drawn illustration, cozy pastel colors, healing aesthetic, NOT realistic photo.
+Style requirements:
+- Soft hand-drawn illustration style, cozy and healing aesthetic
+- NOT a realistic photograph - must be illustrated art
+- Minimalist flat design with gentle brush strokes
+- Warm pastel color palette: soft orange, cream white, gentle yellow
 
-Scene elements:
-- Sunlight streaming through a cozy window with curtains
-- A steaming cup of coffee or tea on a wooden desk
-- Small potted plants or fresh flowers
-- Morning light rays, warm orange-yellow tones
-- Minimalist flat illustration style, clean composition
-- Gentle brush strokes, dreamy atmosphere
-- Perfect for social media sharing
+Scene description:
+- Golden morning sunlight streaming through a cozy window
+- A steaming cup of coffee or warm tea on a wooden desk
+- Small succulent plant or fresh flowers nearby
+- Soft light rays creating a hopeful, fresh start feeling
+- Clean composition, perfect for social media sharing
+- The atmosphere should feel like "a beautiful new day begins"
 """,
     "午饭": """
-Create a cozy lunch illustration for young office workers.
+A cozy and appetizing lunch scene illustration for young office workers.
 
-Style: Warm hand-drawn illustration, appetizing food scene, healing aesthetic, NOT realistic photo.
+Style requirements:
+- Soft hand-drawn illustration style, warm and inviting
+- NOT a realistic photograph - must be illustrated art
+- Minimalist flat design with gentle brush strokes
+- Warm pastel color palette: soft orange, fresh green, warm beige
 
-Scene elements:
-- A lovely bento box or simple meal on table
-- Fresh vegetables, fruits, rice in soft colors
-- Warm table setting with simple utensils
-- Soft lighting, pleasant dining atmosphere
-- Minimalist flat illustration style
-- Pastel orange, warm beige, fresh green tones
-- Perfect for social media sharing
+Scene description:
+- A lovely homemade bento box or simple healthy meal
+- Fresh vegetables, fruits, and rice arranged beautifully
+- Warm table setting with simple elegant utensils
+- Soft natural lighting, pleasant dining atmosphere
+- Small decorative elements like a napkin or small plant
+- The atmosphere should feel like "enjoy your meal, take care of yourself"
 """,
     "午休": """
-Create a relaxing nap time illustration for young office workers.
+A peaceful and relaxing nap time illustration for young office workers.
 
-Style: Peaceful hand-drawn illustration, restful atmosphere, healing aesthetic, NOT realistic photo.
+Style requirements:
+- Soft hand-drawn illustration style, serene and calming
+- NOT a realistic photograph - must be illustrated art
+- Minimalist flat design with gentle brush strokes
+- Cool pastel color palette: soft blue, cream white, pale green
 
-Scene elements:
-- A comfortable sofa or lounge chair
-- Soft pillows and cozy blanket
-- Gentle afternoon light, quiet atmosphere
-- Small plants, a book, relaxing elements
-- Soft blue, cream white, pale green tones
-- Minimalist flat illustration style
-- Perfect for social media sharing
+Scene description:
+- A comfortable lounge chair or soft sofa corner
+- Fluffy pillows and a cozy light blanket
+- Gentle afternoon light filtering through curtains
+- A small book, headphones, or eye mask nearby
+- Quiet, restful atmosphere with soft shadows
+- The atmosphere should feel like "time to recharge and rest"
 """,
     "下午茶": """
-Create a pleasant afternoon tea illustration for young office workers.
+A refreshing and delightful afternoon tea illustration for young office workers.
 
-Style: Cozy hand-drawn illustration, refreshing vibes, healing aesthetic, NOT realistic photo.
+Style requirements:
+- Soft hand-drawn illustration style, cozy and uplifting
+- NOT a realistic photograph - must be illustrated art
+- Minimalist flat design with gentle brush strokes
+- Warm pastel color palette: soft pink, warm beige, gentle brown
 
-Scene elements:
-- A cup of coffee or tea with steam
-- Cute pastries or fresh fruits beside
-- Afternoon sunlight or soft warm lamp
-- Cozy desk corner or cafe atmosphere
-- Warm but gentle color tones
-- Minimalist flat illustration style
-- Perfect for social media sharing
+Scene description:
+- A beautiful cup of coffee or tea with gentle steam
+- Cute pastries, cookies, or fresh fruits beside the drink
+- Soft afternoon sunlight or warm lamp lighting
+- A cozy desk corner or mini cafe atmosphere
+- Small decorative touches like a napkin or tiny flowers
+- The atmosphere should feel like "a sweet break to brighten your day"
 """,
     "下班": """
-Create a joyful after-work illustration for young office workers.
+A joyful and liberating after-work illustration for young office workers.
 
-Style: Warm hand-drawn illustration, sunset vibes, healing aesthetic, NOT realistic photo.
+Style requirements:
+- Soft hand-drawn illustration style, warm and celebratory
+- NOT a realistic photograph - must be illustrated art
+- Minimalist flat design with gentle brush strokes
+- Warm sunset color palette: soft orange, warm pink, golden yellow
 
-Scene elements:
-- Beautiful sunset sky with orange-pink clouds
-- City silhouette or peaceful street
-- Relaxed, happy atmosphere after work day
-- Soft golden-orange, warm pink tones
-- Minimalist flat illustration style
-- Gentle brush strokes, dreamy feeling
-- Perfect for social media sharing
+Scene description:
+- Beautiful sunset sky with soft orange-pink clouds
+- City skyline silhouette in gentle outline
+- A relaxed figure walking home or peaceful street scene
+- Warm golden light creating a "freedom" feeling
+- Maybe a small bag, comfortable shoes, happy vibes
+- The atmosphere should feel like "work is done, time for yourself"
 """,
     "晚安": """
-Create a peaceful goodnight illustration for young office workers.
+A peaceful and dreamy goodnight illustration for young office workers.
 
-Style: Serene hand-drawn illustration, bedtime vibes, healing aesthetic, NOT realistic photo.
+Style requirements:
+- Soft hand-drawn illustration style, serene and sleepy
+- NOT a realistic photograph - must be illustrated art
+- Minimalist flat design with gentle brush strokes
+- Cool night color palette: deep blue, soft purple, warm yellow accent
 
-Scene elements:
-- Night sky with crescent moon and soft stars
-- Cozy bedroom window with warm lamp light
-- Soft pillows, a book, peaceful elements
-- Deep blue, purple, warm yellow accent tones
-- Minimalist flat illustration style
-- Gentle, dreamy atmosphere
-- Perfect for social media sharing
+Scene description:
+- Night sky with crescent moon and twinkling stars
+- A cozy bedroom window with warm soft lamp light inside
+- Fluffy pillows, a soft blanket, maybe a book nearby
+- Gentle night atmosphere, quiet and peaceful
+- Small dreamy elements like floating clouds or moonlight
+- The atmosphere should feel like "rest well, tomorrow is a new day"
 """
 }
 
@@ -128,9 +146,11 @@ def greeting_image_gen_node(
     image_prompt = f"""
 {image_prompt_template}
 
-Important: This must be a soft hand-drawn illustration style, NOT a realistic photograph.
-Use pastel colors, gentle brush strokes, minimalist flat design.
-The image should feel warm, healing, and cozy - perfect for young office workers.
+CRITICAL REQUIREMENTS:
+- This MUST be a soft hand-drawn illustration, NOT a realistic photograph
+- Use pastel colors, gentle gradients, minimal details
+- Style: cozy, healing, warm - like a comforting greeting card
+- Perfect for young office workers on social media
 """
     
     # 生成基于日期和类型的seed，确保同一天同一类型返回相同图片
