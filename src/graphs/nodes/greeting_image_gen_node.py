@@ -3,14 +3,11 @@
 根据早安问候内容生成配图
 """
 
-import os
-import time
-import requests
+import datetime
 from langchain_core.runnables import RunnableConfig
 from langgraph.runtime import Runtime
 from coze_coding_utils.runtime_ctx.context import Context
 from coze_coding_dev_sdk import ImageGenerationClient
-from coze_coding_dev_sdk.s3 import S3SyncStorage
 from graphs.state import GreetingImageGenInput, GreetingImageGenOutput
 
 
@@ -21,8 +18,8 @@ def greeting_image_gen_node(
 ) -> GreetingImageGenOutput:
     """
     title: 早安图片生成
-    desc: 根据早安问候内容和风格生成温馨治愈的配图，上传到对象存储获得固定URL
-    integrations: 图片生成模型, 对象存储
+    desc: 根据早安问候内容和风格生成温馨治愈的配图，适合小红书发布
+    integrations: 图片生成模型
     """
     
     # 构建图片生成提示词
@@ -51,17 +48,8 @@ def greeting_image_gen_node(
 - 适合作为小红书早安问候封面展示
 """
     
-    # 初始化对象存储客户端
-    storage = S3SyncStorage(
-        endpoint_url=os.getenv("COZE_BUCKET_ENDPOINT_URL"),
-        access_key="",
-        secret_key="",
-        bucket_name=os.getenv("COZE_BUCKET_NAME"),
-        region="cn-beijing",
-    )
-    
-    # 源图片URL（优先AI生成，备选picsum）
-    source_image_url = ""
+    # 生成基于日期的seed，确保同一天每次访问返回相同图片
+    today = datetime.datetime.now().strftime("%Y%m%d")
     
     # 创建图片生成客户端
     img_client = ImageGenerationClient()
@@ -75,35 +63,13 @@ def greeting_image_gen_node(
         )
         
         if response.success and response.image_urls:
-            source_image_url = response.image_urls[0]
+            greeting_image_url = response.image_urls[0]
         else:
-            # 使用备用默认图片
-            source_image_url = "https://picsum.photos/800/600"
+            # 使用带seed的picsum，同一天访问返回相同图片
+            greeting_image_url = f"https://picsum.photos/seed/{today}/800/600"
     except Exception:
-        source_image_url = "https://picsum.photos/800/600"
-    
-    # 将图片上传到对象存储，获得固定URL
-    try:
-        # 从源URL下载图片
-        img_response = requests.get(source_image_url, timeout=30)
-        img_response.raise_for_status()
-        
-        # 上传到对象存储
-        file_name = f"greeting-images/greeting_{int(time.time())}.jpg"
-        file_key = storage.upload_file(
-            file_content=img_response.content,
-            file_name=file_name,
-            content_type="image/jpeg",
-        )
-        
-        # 生成签名URL（24小时有效）
-        greeting_image_url = storage.generate_presigned_url(
-            key=file_key,
-            expire_time=86400,
-        )
-    except Exception:
-        # 如果上传失败，直接使用源URL（但picsum每次访问会变化）
-        greeting_image_url = source_image_url
+        # 使用带seed的picsum，同一天访问返回相同图片
+        greeting_image_url = f"https://picsum.photos/seed/{today}/800/600"
     
     return GreetingImageGenOutput(
         greeting_image_url=greeting_image_url,
