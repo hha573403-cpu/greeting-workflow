@@ -159,5 +159,6 @@ def greeting_image_gen_node(
     
     return GreetingImageGenOutput(
         greeting_image_url=greeting_image_url,
+        greeting_type=greeting_type,
         image_prompt=image_prompt.strip()
     )

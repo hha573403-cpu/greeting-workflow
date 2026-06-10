@@ -196,6 +196,7 @@ class GreetingImageGenInput(BaseModel):
 class GreetingImageGenOutput(BaseModel):
     """问候图片生成节点输出"""
     greeting_image_url: str = Field(..., description="问候配图URL")
+    greeting_type: str = Field(..., description="问候类型（从输入传递）")
     image_prompt: str = Field(default="", description="生成图片的提示词")
 
 
