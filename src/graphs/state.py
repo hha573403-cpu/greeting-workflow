@@ -212,3 +212,20 @@ class WechatPushOutput(BaseModel):
     """微信推送节点输出"""
     push_status: str = Field(..., description="推送状态：成功/失败")
     push_message: str = Field(default="", description="推送结果信息")
+
+
+# 笔记内容推送节点
+class NotePushInput(BaseModel):
+    """笔记内容推送节点输入"""
+    note_type: str = Field(..., description="笔记类型：收藏型/讨论型")
+    theme_direction: str = Field(..., description="主题方向")
+    title: str = Field(..., description="笔记标题")
+    content: str = Field(..., description="笔记正文")
+    tags: List[str] = Field(default=[], description="笔记标签列表")
+    image_url: str = Field(default="", description="配图URL")
+
+
+class NotePushOutput(BaseModel):
+    """笔记内容推送节点输出"""
+    push_status: str = Field(..., description="推送状态：成功/失败")
+    push_message: str = Field(default="", description="推送结果信息")

@@ -25,6 +25,8 @@ from graphs.state import (
     ImageGenOutput,
     PreviewInput,
     PreviewOutput,
+    NotePushInput,
+    NotePushOutput,
     GreetingGenInput,
     GreetingGenOutput,
     GreetingImageGenInput,
@@ -38,6 +40,7 @@ from graphs.nodes.topic_select_node import topic_select_node
 from graphs.nodes.content_gen_node import content_gen_node
 from graphs.nodes.image_gen_node import image_gen_node
 from graphs.nodes.preview_node import preview_node
+from graphs.nodes.note_push_node import note_push_node
 from graphs.nodes.greeting_gen_node import greeting_gen_node
 from graphs.nodes.greeting_image_gen_node import greeting_image_gen_node
 from graphs.nodes.wechat_push_node import wechat_push_node
@@ -78,6 +81,7 @@ builder.add_node(
 )
 builder.add_node("image_gen", image_gen_node)
 builder.add_node("preview", preview_node)
+builder.add_node("note_push", note_push_node)
 
 # 问候推送分支节点
 builder.add_node(
@@ -103,11 +107,12 @@ builder.set_conditional_entry_point(
     }
 )
 
-# 笔记内容分支流程
+# 笔记内容分支流程：生成内容 → 推送到企业微信
 builder.add_edge("topic_select", "content_gen")
 builder.add_edge("content_gen", "image_gen")
 builder.add_edge("image_gen", "preview")
-builder.add_edge("preview", END)
+builder.add_edge("preview", "note_push")
+builder.add_edge("note_push", END)
 
 # 问候推送分支流程
 builder.add_edge("greeting_gen", "greeting_image_gen")
