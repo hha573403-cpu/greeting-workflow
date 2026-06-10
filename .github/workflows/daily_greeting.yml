@@ -25,6 +25,8 @@ jobs:
         env:
           COZE_WORKSPACE_PATH: ${{ github.workspace }}
           COZE_INTEGRATION_BASE_URL: ${{ secrets.COZE_INTEGRATION_BASE_URL }}
+          COZE_WORKLOAD_IDENTITY_API_KEY: ${{ secrets.COZE_WORKLOAD_IDENTITY_API_KEY }}
+          WECHAT_WEBHOOK_KEY: ${{ secrets.WECHAT_WEBHOOK_KEY }}
         run: uv run python src/scheduler/greeting_scheduler.py
       
       - name: Upload logs
