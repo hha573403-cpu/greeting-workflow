@@ -8,7 +8,7 @@ import os
 import json
 from datetime import datetime
 from jinja2 import Template
-from typing import Dict, Any
+from typing import Dict, Any, List
 from langchain_core.runnables import RunnableConfig
 from langchain_core.messages import SystemMessage, HumanMessage
 from langgraph.runtime import Runtime

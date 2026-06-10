@@ -5,11 +5,16 @@
 """
 
 import datetime
+from typing import List
 from langchain_core.runnables import RunnableConfig
 from langgraph.runtime import Runtime
 from coze_coding_utils.runtime_ctx.context import Context
 from coze_coding_dev_sdk import ImageGenerationClient
-from graphs.state import GreetingImageGenInput, GreetingImageGenOutput, GREETING_TYPE_IMAGE_STYLE
+from graphs.state import (
+    GreetingImageGenInput,
+    GreetingImageGenOutput,
+    GREETING_TYPE_IMAGE_STYLE
+)
 
 
 # 各类型的图片提示词模板
