@@ -28,6 +28,8 @@ jobs:
           COZE_INTEGRATION_BASE_URL: https://api.coze.cn
           COZE_INTEGRATION_MODEL_BASE_URL: ${{ secrets.ARK_BASE_URL }}
           WECHAT_WEBHOOK_KEY: ${{ secrets.WECHAT_WEBHOOK_KEY }}
+          COZE_BUCKET_ENDPOINT_URL: ${{ secrets.COZE_BUCKET_ENDPOINT_URL }}
+          COZE_BUCKET_NAME: ${{ secrets.COZE_BUCKET_NAME }}
         run: uv run python src/scheduler/greeting_scheduler.py
       
       - name: Upload logs
