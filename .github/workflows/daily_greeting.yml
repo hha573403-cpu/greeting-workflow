@@ -1,19 +1,15 @@
 name: Daily Greeting Scheduler
 
 on:
-  schedule:
-    # 早安：北京时间9:30 (UTC 1:30)
-    - cron: '30 1 * * *'
-    # 午饭：北京时间12:00 (UTC 4:00)
-    - cron: '0 4 * * *'
-    # 午休：北京时间12:30 (UTC 4:30)
-    - cron: '30 4 * * *'
-    # 下午茶：北京时间15:30 (UTC 7:30)
-    - cron: '30 7 * * *'
-    # 下班：北京时间18:00 (UTC 10:00)
-    - cron: '0 10 * * *'
-    # 晚安：北京时间22:00 (UTC 14:00)
-    - cron: '0 14 * * *'
+  repository_dispatch:  # 支持外部API触发
+    types:
+      - morning      # 早安
+      - lunch        # 午饭
+      - lunch_rest   # 午休
+      - afternoon    # 下午茶
+      - evening      # 下班
+      - night        # 晚安
+      - note         # 笔记内容
   workflow_dispatch:  # 支持手动触发测试
     inputs:
       mode:
@@ -65,35 +61,22 @@ jobs:
       - name: Install dependencies
         run: uv sync
       
-      - name: Determine greeting type from schedule
+      - name: Determine greeting type
         id: determine_type
         run: |
-          # 根据当前时间确定问候类型
-          HOUR=$(date -u +%H)
-          MINUTE=$(date -u +%M)
+          # 从repository_dispatch事件类型确定问候类型
+          EVENT_TYPE="${{ github.event.action }}"
           
-          # 北京时间 = UTC + 8
-          BEIJING_HOUR=$((HOUR + 8))
-          if [ $BEIJING_HOUR -ge 24 ]; then
-            BEIJING_HOUR=$((BEIJING_HOUR - 24))
-          fi
-          
-          # 确定问候类型
-          if [ "$BEIJING_HOUR" = "9" ] && [ "$MINUTE" = "30" ]; then
-            echo "type=早安" >> $GITHUB_OUTPUT
-          elif [ "$BEIJING_HOUR" = "12" ] && [ "$MINUTE" = "00" ]; then
-            echo "type=午饭" >> $GITHUB_OUTPUT
-          elif [ "$BEIJING_HOUR" = "12" ] && [ "$MINUTE" = "30" ]; then
-            echo "type=午休" >> $GITHUB_OUTPUT
-          elif [ "$BEIJING_HOUR" = "15" ] && [ "$MINUTE" = "30" ]; then
-            echo "type=下午茶" >> $GITHUB_OUTPUT
-          elif [ "$BEIJING_HOUR" = "18" ] && [ "$MINUTE" = "00" ]; then
-            echo "type=下班" >> $GITHUB_OUTPUT
-          elif [ "$BEIJING_HOUR" = "22" ] && [ "$MINUTE" = "00" ]; then
-            echo "type=晚安" >> $GITHUB_OUTPUT
-          else
-            echo "type=早安" >> $GITHUB_OUTPUT
-          fi
+          case "$EVENT_TYPE" in
+            morning)    echo "type=早安" >> $GITHUB_OUTPUT ;;
+            lunch)      echo "type=午饭" >> $GITHUB_OUTPUT ;;
+            lunch_rest) echo "type=午休" >> $GITHUB_OUTPUT ;;
+            afternoon)  echo "type=下午茶" >> $GITHUB_OUTPUT ;;
+            evening)    echo "type=下班" >> $GITHUB_OUTPUT ;;
+            night)      echo "type=晚安" >> $GITHUB_OUTPUT ;;
+            note)       echo "type=笔记" >> $GITHUB_OUTPUT ;;
+            *)          echo "type=早安" >> $GITHUB_OUTPUT ;;
+          esac
       
       - name: Run workflow
         env:
@@ -103,12 +86,23 @@ jobs:
           COZE_INTEGRATION_MODEL_BASE_URL: ${{ secrets.ARK_BASE_URL }}
           WECHAT_WEBHOOK_KEY: ${{ secrets.WECHAT_WEBHOOK_KEY }}
         run: |
-          if [ "${{ inputs.mode }}" = "note" ]; then
-            uv run python src/scheduler/greeting_scheduler.py --mode note --note-type "${{ inputs.note_type }}" --theme "${{ inputs.theme }}"
-          elif [ "${{ inputs.greeting_type }}" != "" ]; then
-            uv run python src/scheduler/greeting_scheduler.py --mode greeting --greeting-type "${{ inputs.greeting_type }}"
+          TYPE="${{ steps.determine_type.outputs.type }}"
+          
+          # 判断是手动触发还是外部触发
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            if [ "${{ inputs.mode }}" = "note" ]; then
+              uv run python src/scheduler/greeting_scheduler.py --mode note --note-type "${{ inputs.note_type }}" --theme "${{ inputs.theme }}"
+            else
+              uv run python src/scheduler/greeting_scheduler.py --mode greeting --greeting-type "${{ inputs.greeting_type }}"
+            fi
+          elif [ "$TYPE" = "笔记" ]; then
+            # 外部触发笔记内容
+            NOTE_TYPE="${{ github.event.client_payload.note_type }}"
+            THEME="${{ github.event.client_payload.theme }}"
+            uv run python src/scheduler/greeting_scheduler.py --mode note --note-type "$NOTE_TYPE" --theme "$THEME"
           else
-            uv run python src/scheduler/greeting_scheduler.py --mode greeting --greeting-type "${{ steps.determine_type.outputs.type }}"
+            # 外部触发问候推送
+            uv run python src/scheduler/greeting_scheduler.py --mode greeting --greeting-type "$TYPE"
           fi
       
       - name: Upload logs
