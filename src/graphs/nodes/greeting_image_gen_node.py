@@ -17,110 +17,19 @@ from graphs.state import (
 )
 
 
-# 各类型的图片提示词模板 - 治愈系插画风格，符合小红书审美
+# 各类型的图片提示词模板 - 简洁明确，强调插画风格
 GREETING_TYPE_IMAGE_PROMPT = {
-    "早安": """
-A warm and energetic morning illustration for young office workers.
-
-Style requirements:
-- Soft hand-drawn illustration style, cozy and healing aesthetic
-- NOT a realistic photograph - must be illustrated art
-- Minimalist flat design with gentle brush strokes
-- Warm pastel color palette: soft orange, cream white, gentle yellow
-
-Scene description:
-- Golden morning sunlight streaming through a cozy window
-- A steaming cup of coffee or warm tea on a wooden desk
-- Small succulent plant or fresh flowers nearby
-- Soft light rays creating a hopeful, fresh start feeling
-- Clean composition, perfect for social media sharing
-- The atmosphere should feel like "a beautiful new day begins"
-""",
-    "午饭": """
-A cozy and appetizing lunch scene illustration for young office workers.
-
-Style requirements:
-- Soft hand-drawn illustration style, warm and inviting
-- NOT a realistic photograph - must be illustrated art
-- Minimalist flat design with gentle brush strokes
-- Warm pastel color palette: soft orange, fresh green, warm beige
-
-Scene description:
-- A lovely homemade bento box or simple healthy meal
-- Fresh vegetables, fruits, and rice arranged beautifully
-- Warm table setting with simple elegant utensils
-- Soft natural lighting, pleasant dining atmosphere
-- Small decorative elements like a napkin or small plant
-- The atmosphere should feel like "enjoy your meal, take care of yourself"
-""",
-    "午休": """
-A peaceful and relaxing nap time illustration for young office workers.
-
-Style requirements:
-- Soft hand-drawn illustration style, serene and calming
-- NOT a realistic photograph - must be illustrated art
-- Minimalist flat design with gentle brush strokes
-- Cool pastel color palette: soft blue, cream white, pale green
-
-Scene description:
-- A comfortable lounge chair or soft sofa corner
-- Fluffy pillows and a cozy light blanket
-- Gentle afternoon light filtering through curtains
-- A small book, headphones, or eye mask nearby
-- Quiet, restful atmosphere with soft shadows
-- The atmosphere should feel like "time to recharge and rest"
-""",
-    "下午茶": """
-A refreshing and delightful afternoon tea illustration for young office workers.
-
-Style requirements:
-- Soft hand-drawn illustration style, cozy and uplifting
-- NOT a realistic photograph - must be illustrated art
-- Minimalist flat design with gentle brush strokes
-- Warm pastel color palette: soft pink, warm beige, gentle brown
-
-Scene description:
-- A beautiful cup of coffee or tea with gentle steam
-- Cute pastries, cookies, or fresh fruits beside the drink
-- Soft afternoon sunlight or warm lamp lighting
-- A cozy desk corner or mini cafe atmosphere
-- Small decorative touches like a napkin or tiny flowers
-- The atmosphere should feel like "a sweet break to brighten your day"
-""",
-    "下班": """
-A joyful and liberating after-work illustration for young office workers.
-
-Style requirements:
-- Soft hand-drawn illustration style, warm and celebratory
-- NOT a realistic photograph - must be illustrated art
-- Minimalist flat design with gentle brush strokes
-- Warm sunset color palette: soft orange, warm pink, golden yellow
-
-Scene description:
-- Beautiful sunset sky with soft orange-pink clouds
-- City skyline silhouette in gentle outline
-- A relaxed figure walking home or peaceful street scene
-- Warm golden light creating a "freedom" feeling
-- Maybe a small bag, comfortable shoes, happy vibes
-- The atmosphere should feel like "work is done, time for yourself"
-""",
-    "晚安": """
-A peaceful and dreamy goodnight illustration for young office workers.
-
-Style requirements:
-- Soft hand-drawn illustration style, serene and sleepy
-- NOT a realistic photograph - must be illustrated art
-- Minimalist flat design with gentle brush strokes
-- Cool night color palette: deep blue, soft purple, warm yellow accent
-
-Scene description:
-- Night sky with crescent moon and twinkling stars
-- A cozy bedroom window with warm soft lamp light inside
-- Fluffy pillows, a soft blanket, maybe a book nearby
-- Gentle night atmosphere, quiet and peaceful
-- Small dreamy elements like floating clouds or moonlight
-- The atmosphere should feel like "rest well, tomorrow is a new day"
-"""
+    "早安": "flat vector illustration, cute kawaii style, morning scene with coffee cup and sunlight, soft orange and cream colors, minimalist design, no text, simple shapes, warm atmosphere, digital art",
+    
+    "午饭": "flat vector illustration, cute kawaii style, healthy lunch bento box with vegetables and fruits, soft orange and green colors, minimalist design, no text, simple shapes, warm atmosphere, digital art",
+    
+    "午休": "flat vector illustration, cute kawaii style, peaceful nap scene with pillow and soft blanket, soft blue and white colors, minimalist design, no text, simple shapes, calm atmosphere, digital art",
+    
+    "下午茶": "flat vector illustration, cute kawaii style, afternoon tea scene with coffee and cake, soft pink and beige colors, minimalist design, no text, simple shapes, cozy atmosphere, digital art",
+    
+    "下班": "flat vector illustration, cute kawaii style, evening sunset city scene with warm sky, soft orange and gold colors, minimalist design, no text, simple shapes, relaxing atmosphere, digital art",
+    
+    "晚安": "flat vector illustration, cute kawaii style, night scene with moon and stars, soft blue and purple colors, minimalist design, no text, simple shapes, peaceful atmosphere, digital art",
 }
 
 
@@ -131,44 +40,29 @@ def greeting_image_gen_node(
 ) -> GreetingImageGenOutput:
     """
     title: 问候图片生成
-    desc: 根据问候类型生成配图，支持早安/午饭/午休/下午茶/下班/晚安
-    integrations: 图片生成模型
+    desc: 根据问候类型生成治愈系配图，使用AI图片生成服务
+    integrations: 图片生成
     """
-    
+    ctx = runtime.context
     greeting_type = state.greeting_type
-    greeting_content = state.greeting_content
     
-    # 获取对应类型的图片风格和提示词模板
-    image_style = GREETING_TYPE_IMAGE_STYLE.get(greeting_type, "温暖治愈的风格")
-    image_prompt_template = GREETING_TYPE_IMAGE_PROMPT.get(greeting_type, GREETING_TYPE_IMAGE_PROMPT["早安"])
+    # 获取对应类型的图片提示词
+    image_prompt = GREETING_TYPE_IMAGE_PROMPT.get(greeting_type, GREETING_TYPE_IMAGE_PROMPT["早安"])
     
-    # 构建完整的图片提示词
-    image_prompt = f"""
-{image_prompt_template}
-
-CRITICAL REQUIREMENTS:
-- This MUST be a soft hand-drawn illustration, NOT a realistic photograph
-- Use pastel colors, gentle gradients, minimal details
-- Style: cozy, healing, warm - like a comforting greeting card
-- Perfect for young office workers on social media
-"""
+    # 获取风格描述（用于日志）
+    style_info = GREETING_TYPE_IMAGE_STYLE.get(greeting_type, "治愈系插画")
+    ctx.logger.info(f"图片风格: {style_info}")
+    ctx.logger.info(f"图片提示词: {image_prompt}")
     
-    # 生成基于日期和类型的seed，确保同一天同一类型返回相同图片
-    today = datetime.datetime.now().strftime("%Y%m%d")
-    type_seed_map = {
-        "早安": "morning",
-        "午饭": "lunch",
-        "午休": "nap",
-        "下午茶": "tea",
-        "下班": "offwork",
-        "晚安": "night"
-    }
-    type_seed = type_seed_map.get(greeting_type, "morning")
-    
-    # 创建图片生成客户端
+    # 使用图片生成客户端
     img_client = ImageGenerationClient()
     
-    # 调用图片生成
+    # 获取今天的日期作为seed（保证同一天生成相同风格）
+    today = datetime.datetime.now().strftime("%Y%m%d")
+    
+    # 尝试生成AI图片
+    image_url = ""
+    
     try:
         response = img_client.generate(
             prompt=image_prompt,
@@ -176,17 +70,21 @@ CRITICAL REQUIREMENTS:
             watermark=False
         )
         
-        if response.success and response.image_urls:
-            greeting_image_url = response.image_urls[0]
+        if response.success and response.data and len(response.data) > 0:
+            image_url = response.data[0].url
+            ctx.logger.info(f"AI图片生成成功: {image_url}")
         else:
-            # 使用带seed的picsum作为备选，确保同一天同一类型图片一致
-            greeting_image_url = f"https://picsum.photos/seed/{today}-{type_seed}/800/600"
-    except Exception:
-        # 使用带seed的picsum作为备选
-        greeting_image_url = f"https://picsum.photos/seed/{today}-{type_seed}/800/600"
+            ctx.logger.warning(f"AI图片生成失败: {response.message if hasattr(response, 'message') else 'unknown error'}")
+    except Exception as e:
+        ctx.logger.warning(f"图片生成异常: {str(e)}")
+    
+    # 如果AI生成失败，使用带日期seed的picsum作为备选
+    if not image_url:
+        image_url = f"https://picsum.photos/seed/{today}/800/600"
+        ctx.logger.info(f"使用picsum备选图片: {image_url}")
     
     return GreetingImageGenOutput(
-        greeting_image_url=greeting_image_url,
-        greeting_type=greeting_type,
-        image_prompt=image_prompt.strip()
+        greeting_image_url=image_url,
+        image_prompt=image_prompt,
+        greeting_type=greeting_type
     )
