@@ -5,6 +5,7 @@
 """
 
 import datetime
+import logging
 from typing import List
 from langchain_core.runnables import RunnableConfig
 from langgraph.runtime import Runtime
@@ -15,6 +16,8 @@ from graphs.state import (
     GreetingImageGenOutput,
     GREETING_TYPE_IMAGE_STYLE
 )
+
+logger = logging.getLogger(__name__)
 
 
 # 各类型的图片提示词模板 - 简洁明确，强调插画风格
@@ -51,8 +54,8 @@ def greeting_image_gen_node(
     
     # 获取风格描述（用于日志）
     style_info = GREETING_TYPE_IMAGE_STYLE.get(greeting_type, "治愈系插画")
-    ctx.logger.info(f"图片风格: {style_info}")
-    ctx.logger.info(f"图片提示词: {image_prompt}")
+    logger.info(f"图片风格: {style_info}")
+    logger.info(f"图片提示词: {image_prompt}")
     
     # 使用图片生成客户端
     img_client = ImageGenerationClient()
@@ -72,11 +75,11 @@ def greeting_image_gen_node(
         
         if response.success and response.data and len(response.data) > 0:
             image_url = response.data[0].url
-            ctx.logger.info(f"AI图片生成成功: {image_url}")
+            logger.info(f"AI图片生成成功: {image_url}")
         else:
-            ctx.logger.warning(f"AI图片生成失败: {response.message if hasattr(response, 'message') else 'unknown error'}")
+            logger.warning(f"AI图片生成失败: {response.message if hasattr(response, 'message') else 'unknown error'}")
     except Exception as e:
-        ctx.logger.warning(f"图片生成异常: {str(e)}")
+        logger.warning(f"图片生成异常: {str(e)}")
     
     # 如果AI生成失败，使用带日期seed的picsum作为备选
     if not image_url:
