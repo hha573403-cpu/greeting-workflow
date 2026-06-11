@@ -1,8 +1,8 @@
 """
-小红书笔记自动生成工作流
+小红书笔记与全天问候自动生成工作流
 
 本项目实现针对年轻打工人的日常养生与成长主题小红书笔记每日自动生成工作流，
-同时支持每日早安问候推送功能。
+同时支持全天候问候推送系统（6个时间点）。
 
 主要功能：
 1. 小红书笔记生成
@@ -10,72 +10,67 @@
    - 主题方向覆盖：养生打工人、赚钱爱自己、职场成长、生活小技巧
    - 自动生成笔记内容：标题、正文、标签、配图
    - 内容预览与质量评估功能
+   - 推送到企业微信
 
-2. 早安问候推送（每天9:30）
-   - 每日待办生成：自动生成打工人每日待办提醒
-   - 早安问候文案：每天不重复的温馨问候
-   - 风格可定制：温馨治愈、鸡血励志、幽默调侃、随意
-   - 自动生成配图
-   - 整合推送到企业微信群提醒
+2. 全天候问候推送系统（6个时间点）
+   - 早安 (09:30)：温馨早安问候，开启美好一天
+   - 午饭 (12:00)：午餐提醒，健康饮食倡导
+   - 午休 (12:30)：午间休息提醒，充电小贴士
+   - 下午茶 (15:30)：下午茶时光，能量补给
+   - 下班 (18:00)：下班问候，犒劳辛苦的自己
+   - 晚安 (22:00)：温馨晚安，好好休息
+   
+   - 每个时间点有5种不同场景，每天随机选择，图片多变不重复
+   - 文案模型：doubao-seed-1-8-251228（豆包Seed）
+   - 图片模型：doubao-seedream-5-0-260128（SeeDream v5.0）
 
 工作流结构：
 入口 → 条件判断(content_type)
-  ├→ 笔记内容分支：话题选择 → 内容生成(Agent) → 图片生成 → 内容预览
-  └→ 早安问候分支：每日待办生成(Agent) → 问候文案生成(Agent) → 图片生成 → 微信推送
+  ├→ 笔记内容分支：话题选择 → 内容生成(Agent) → 图片生成 → 推送到企业微信
+  └→ 问候推送分支：问候文案生成(Agent) → 图片生成(多场景随机) → 微信推送
 
 使用方式：
-- 笔记内容：输入笔记类型、主题方向 → 输出完整笔记内容
-- 早安问候：输入greeting_style → 输出每日待办+问候内容+配图+推送状态
+- 笔记内容：输入笔记类型、主题方向 → 输出完整笔记内容并推送
+- 问候推送：输入greeting_type（早安/午饭/午休/下午茶/下班/晚安）→ 输出问候内容+配图+推送状态
 
-定时调度：
-- 启动命令: bash scripts/start_scheduler.sh
-- 调度时间: 每天 09:30
-- 推送内容: 每日待办 + 早安问候文案 + 配图
-- 日志位置: /app/work/logs/bypass/scheduler.log
+定时调度（cron-job.org外部触发）：
+- 早安: 09:30（event_type: morning）
+- 午饭: 12:00（event_type: lunch）
+- 午休: 12:30（event_type: lunch_rest）
+- 下午茶: 15:30（event_type: afternoon）
+- 下班: 18:00（event_type: evening）
+- 晚安: 22:00（event_type: night）
+- GitHub Actions workflow: .github/workflows/daily_greeting.yml
+- 推送渠道: 企业微信Webhook
+
+图片生成特点：
+- 每个时间点5种场景池，根据日期随机选择
+- 去除时钟元素，通过场景氛围体现时间特征
+- flat vector illustration, cute kawaii风格
 """
 
 # 节点清单
 # | 节点名 | 文件位置 | 类型 | 功能描述 | 分支逻辑 | 配置文件 |
 # |-------|---------|------|---------|---------|---------|
-# | content_type_check | graph.py | condition | 判断内容类型选择分支 | "早安问候"→daily_todo, "笔记内容"→topic_select | - |
+# | content_type_check | graph.py | condition | 判断内容类型选择分支 | "问候推送"→greeting_gen, "笔记内容"→topic_select | - |
+# | greeting_type_check | graph.py | condition | 判断问候类型 | 6种问候类型各有分支 | - |
 # | topic_select | nodes/topic_select_node.py | task | 根据笔记类型和主题选择话题 | - | - |
 # | content_gen | nodes/content_gen_node.py | agent | 使用LLM生成笔记内容 | - | config/content_gen_cfg.json |
-# | image_gen | nodes/image_gen_node.py | task | 根据内容生成配图 | - | - |
-# | preview | nodes/preview_node.py | task | 整合输出内容预览 | - | - |
-# | daily_todo | nodes/daily_todo_node.py | agent | 使用LLM生成每日待办 | - | config/daily_todo_cfg.json |
-# | greeting_gen | nodes/greeting_gen_node.py | agent | 使用LLM生成早安问候文案 | - | config/greeting_gen_cfg.json |
-# | greeting_image_gen | nodes/greeting_image_gen_node.py | task | 生成早安问候配图 | - | - |
-# | wechat_push | nodes/wechat_push_node.py | task | 整合推送每日待办+早安问候到企业微信 | - | - |
+# | note_image_gen | nodes/note_image_gen_node.py | task | 根据笔记内容生成配图 | - | - |
+# | note_push | nodes/note_push_node.py | task | 推送笔记内容到企业微信 | - | - |
+# | greeting_gen | nodes/greeting_gen_node.py | agent | 使用LLM生成问候文案 | - | config/greeting_gen_cfg.json |
+# | greeting_image_gen | nodes/greeting_image_gen_node.py | task | 生成问候配图(多场景随机) | - | - |
+# | wechat_push | nodes/wechat_push_node.py | task | 推送问候内容到企业微信 | - | - |
 
 # 类型说明: task(普通任务节点) / agent(大模型节点) / condition(条件分支) / looparray(列表循环) / loopcond(条件循环)
 
-# 子图清单
-# 无子图（主图为带条件分支的DAG结构）
+# 模型配置
+# | 模型用途 | 模型ID | 配置文件 |
+# |---------|--------|---------|
+# | 文案生成 | doubao-seed-1-8-251228 | config/greeting_gen_cfg.json |
+# | 图片生成 | doubao-seedream-5-0-260128 | - |
 
 # 技能使用
-# - content_gen节点使用大语言模型技能(LLMClient)
-# - greeting_gen节点使用大语言模型技能(LLMClient)
-# - image_gen节点使用图片生成技能(ImageGenerationClient)
-# - greeting_image_gen节点使用图片生成技能(ImageGenerationClient)
-# - wechat_push节点使用企业微信机器人集成(integration-wechat-bot)
-
-# 集成配置要求
-# 企业微信机器人推送需要配置 webhook：
-# 1. 在企业微信群中添加机器人获取webhook URL
-# 2. 在Coze平台配置 integration-wechat-bot 集成
-# 3. 配置字段支持 webhook_url 或 webhook_key
-# 4. 格式示例: https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxxxx-xxxx-xxxx
-# 5. 配置后早安装问候将自动推送到企业微信群
-
-# 话题库说明（笔记内容分支）
-# 预定义话题库位于 topic_select_node.py，包含以下主题方向：
-# - 养生打工人：办公室养生、健康早餐、颈椎保健、养生茶、午休指南等
-# - 赚钱爱自己：理财入门、副业思路、省钱技巧、升薪建议、省钱APP等
-# - 职场成长：新人技能、沟通技巧、办公软件、邮件写作、会议记录等
-# - 生活小技巧：独居指南、租房避坑、通勤利用、周末充电、时间管理等
-
-# 早安问候说明
-# - 每天生成不重复内容（结合日期、星期变化）
-# - 风格可选：温馨治愈/鸡血励志/幽默调侃/随意
-# - 段落式内容，适合小红书发布
-# - 配图自动生成，温暖治愈风格
+# - LLM调用：使用火山引擎方舟API（Ark API）
+# - 图片生成：使用ImageGenerationClient（SeeDream v5.0）
+# - 企业微信推送：通过Webhook URL
