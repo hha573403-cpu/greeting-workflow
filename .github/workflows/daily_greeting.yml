@@ -82,8 +82,8 @@ jobs:
         env:
           COZE_WORKSPACE_PATH: ${{ github.workspace }}
           COZE_WORKLOAD_IDENTITY_API_KEY: ${{ secrets.COZE_API_KEY }}
-          # LLM和图片生成都使用integration.coze.cn（SDK默认配置）
-          # 不要设置COZE_INTEGRATION_BASE_URL，让SDK使用默认值
+          COZE_INTEGRATION_BASE_URL: https://integration.coze.cn
+          COZE_INTEGRATION_MODEL_BASE_URL: https://integration.coze.cn/api/v3
           WECHAT_WEBHOOK_KEY: ${{ secrets.WECHAT_WEBHOOK_KEY }}
         run: |
           TYPE="${{ steps.determine_type.outputs.type }}"
