@@ -20,19 +20,19 @@ from graphs.state import (
 logger = logging.getLogger(__name__)
 
 
-# 各类型的图片提示词模板 - 简洁明确，强调插画风格
+# 各类型的图片提示词模板 - 强调时间特征，一眼看出时间段
 GREETING_TYPE_IMAGE_PROMPT = {
-    "早安": "flat vector illustration, cute kawaii style, morning scene with coffee cup and sunlight, soft orange and cream colors, minimalist design, no text, simple shapes, warm atmosphere, digital art",
+    "早安": "flat vector illustration, cute kawaii style, bright morning sunrise with golden sun rays coming through window, alarm clock showing 9:30 AM, steaming coffee cup and toast on breakfast table, warm orange and yellow morning light, fresh flowers in vase, no text, simple clean design, digital art",
     
-    "午饭": "flat vector illustration, cute kawaii style, healthy lunch bento box with vegetables and fruits, soft orange and green colors, minimalist design, no text, simple shapes, warm atmosphere, digital art",
+    "午饭": "flat vector illustration, cute kawaii style, clock showing 12:00 noon, delicious lunch bento box with rice vegetables and fruits on table, chopsticks and spoon, bright midday sunlight from window, warm orange and green colors, no text, simple clean design, digital art",
     
-    "午休": "flat vector illustration, cute kawaii style, peaceful nap scene with pillow and soft blanket, soft blue and white colors, minimalist design, no text, simple shapes, calm atmosphere, digital art",
+    "午休": "flat vector illustration, cute kawaii style, clock showing 12:30 PM, person resting on office chair with eyes closed, soft pillow and blanket, calm blue and white colors, quiet afternoon atmosphere, window with soft light, no text, simple clean design, digital art",
     
-    "下午茶": "flat vector illustration, cute kawaii style, afternoon tea scene with coffee and cake, soft pink and beige colors, minimalist design, no text, simple shapes, cozy atmosphere, digital art",
+    "下午茶": "flat vector illustration, cute kawaii style, clock showing 3:30 PM, coffee cup with latte art and slice of cake on office desk, warm afternoon sunlight streaming through window, soft pink and beige colors, cozy relaxing vibe, no text, simple clean design, digital art",
     
-    "下班": "flat vector illustration, cute kawaii style, evening sunset city scene with warm sky, soft orange and gold colors, minimalist design, no text, simple shapes, relaxing atmosphere, digital art",
+    "下班": "flat vector illustration, cute kawaii style, clock showing 6:00 PM, beautiful orange and pink sunset sky with sun going down, silhouette of city buildings and office worker walking home, golden evening light, warm orange and gold colors, no text, simple clean design, digital art",
     
-    "晚安": "flat vector illustration, cute kawaii style, night scene with moon and stars, soft blue and purple colors, minimalist design, no text, simple shapes, peaceful atmosphere, digital art",
+    "晚安": "flat vector illustration, cute kawaii style, clock showing 10:00 PM, crescent moon and stars in night sky through bedroom window, soft bedside lamp with warm glow, cozy bed with pillows and blanket, deep blue and purple night colors, peaceful sleeping atmosphere, no text, simple clean design, digital art",
 }
 
 
