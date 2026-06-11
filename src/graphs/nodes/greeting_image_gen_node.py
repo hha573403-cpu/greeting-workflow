@@ -135,8 +135,9 @@ def greeting_image_gen_node(
     logger.info(f"今日场景序号: {scene_index + 1}/{len(scene_prompts)}")
     logger.info(f"图片提示词: {image_prompt}")
     
-    # 使用图片生成客户端
+    # 使用图片生成客户端（默认配置，使用integration.coze.cn）
     img_client = ImageGenerationClient()
+    logger.info(f"图片生成客户端 base_url: {img_client.config.base_url}")
     
     # 获取今天的日期作为seed（保证同一天生成相同风格）
     today = datetime.datetime.now().strftime("%Y%m%d")

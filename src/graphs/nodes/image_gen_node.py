@@ -3,13 +3,14 @@
 根据笔记内容生成配图
 """
 
-import os
-from typing import Dict, Any
+import logging
 from langchain_core.runnables import RunnableConfig
 from langgraph.runtime import Runtime
 from coze_coding_utils.runtime_ctx.context import Context
 from coze_coding_dev_sdk import ImageGenerationClient
 from graphs.state import ImageGenInput, ImageGenOutput
+
+logger = logging.getLogger(__name__)
 
 
 def image_gen_node(
@@ -42,8 +43,11 @@ def image_gen_node(
 - 尺寸比例适合小红书封面展示
 """
     
-    # 创建图片生成客户端（不传ctx参数）
+    logger.info(f"图片提示词: {image_prompt}")
+    
+    # 使用图片生成客户端（默认配置，使用integration.coze.cn）
     img_client = ImageGenerationClient()
+    logger.info(f"图片生成客户端 base_url: {img_client.config.base_url}")
     
     # 调用图片生成
     try:
