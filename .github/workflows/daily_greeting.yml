@@ -82,7 +82,8 @@ jobs:
         env:
           COZE_WORKSPACE_PATH: ${{ github.workspace }}
           COZE_WORKLOAD_IDENTITY_API_KEY: ${{ secrets.ARK_API_KEY }}
-          COZE_INTEGRATION_BASE_URL: https://api.coze.cn
+          # 图片生成和模型调用都使用方舟API
+          COZE_INTEGRATION_BASE_URL: ${{ secrets.ARK_BASE_URL }}
           COZE_INTEGRATION_MODEL_BASE_URL: ${{ secrets.ARK_BASE_URL }}
           WECHAT_WEBHOOK_KEY: ${{ secrets.WECHAT_WEBHOOK_KEY }}
         run: |
