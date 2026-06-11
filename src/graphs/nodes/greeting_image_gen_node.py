@@ -135,9 +135,22 @@ def greeting_image_gen_node(
     logger.info(f"今日场景序号: {scene_index + 1}/{len(scene_prompts)}")
     logger.info(f"图片提示词: {image_prompt}")
     
-    # 使用图片生成客户端（默认配置，使用integration.coze.cn）
-    img_client = ImageGenerationClient()
-    logger.info(f"图片生成客户端 base_url: {img_client.config.base_url}")
+    # 使用图片生成客户端（默认配置）
+    try:
+        img_client = ImageGenerationClient()
+        logger.info(f"图片生成客户端初始化成功")
+        logger.info(f"base_url: {img_client.config.base_url}")
+        logger.info(f"api_key前10字符: {img_client.config.api_key[:10] if img_client.config.api_key else '无'}...")
+    except Exception as init_err:
+        logger.error(f"图片生成客户端初始化失败: {init_err}")
+        # 初始化失败，直接使用picsum
+        image_url = f"https://picsum.photos/seed/{today}/800/600"
+        logger.info(f"初始化失败，使用picsum备选: {image_url}")
+        return GreetingImageGenOutput(
+            greeting_image_url=image_url,
+            image_prompt=image_prompt,
+            greeting_type=greeting_type
+        )
     
     # 获取今天的日期作为seed（保证同一天生成相同风格）
     today = datetime.datetime.now().strftime("%Y%m%d")
