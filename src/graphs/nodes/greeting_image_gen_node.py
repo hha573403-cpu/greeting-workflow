@@ -84,7 +84,7 @@ def greeting_image_gen_node(
     # 如果AI生成失败，使用带日期seed的picsum作为备选
     if not image_url:
         image_url = f"https://picsum.photos/seed/{today}/800/600"
-        ctx.logger.info(f"使用picsum备选图片: {image_url}")
+        logger.info(f"使用picsum备选图片: {image_url}")
     
     return GreetingImageGenOutput(
         greeting_image_url=image_url,
